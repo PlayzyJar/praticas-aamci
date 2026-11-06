@@ -13,6 +13,11 @@ build/
 *.map
 *.a
 *.so
+**/tests/test_*
+!**/tests/**/*.c
+!**/tests/**/*.h
+!**/tests/*.c
+!**/tests/*.h
 
 # ==========================================
 # Eclipse & CubeIDE Workspace / Metadata
