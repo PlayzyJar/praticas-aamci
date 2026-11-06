@@ -1,0 +1,35 @@
+# ==========================================
+# STM32CubeIDE / Eclipse Build Artifacts
+# ==========================================
+Debug/
+Release/
+build/
+*.o
+*.d
+*.su
+*.elf
+*.bin
+*.hex
+*.map
+*.a
+*.so
+
+# ==========================================
+# Eclipse & CubeIDE Workspace / Metadata
+# ==========================================
+.metadata/
+.settings/language.settings.xml
+
+# ==========================================
+# Excluded Projects (Out of Active Scope)
+# ==========================================
+aula-usart/
+teste-display-tft/
+
+# ==========================================
+# OS & Editor Files
+# ==========================================
+.DS_Store
+Thumbs.db
+*.swp
+*~
