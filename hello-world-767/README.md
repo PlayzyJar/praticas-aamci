@@ -1,67 +1,23 @@
-# Prática: Hello World 767 (GPIO & USART3)
+# Hello World 767
 
-Projeto inicial para validação de periféricos básicos da placa **NUCLEO-F767ZI**: leitura de entrada digital (Botão de Usuário), escrita em saídas digitais (LEDs coloridos) e transmissão serial formatada via USART3.
+Teste basico de GPIO e comunicacao serial na NUCLEO-F767ZI.
 
----
+## Funcionamento
 
-## 📋 Objetivo do Firmware
+O firmware monitora continuamente o botao de usuario (B1) e transmite seu estado pela USART3. Enquanto o botao permanece pressionado, os tres LEDs onboard sao mantidos acesos; ao soltar, os LEDs sao apagados.
 
-1. Ler o estado lógico do botão azul `B1` (`PC13`).
-2. Transmitir periodicamente via porta serial USART3 a string `estado: <0 ou 1>\r\n`.
-3. Ao pressionar o botão, acender simultaneamente os 3 LEDs on-board (`LD1`, `LD2` e `LD3`).
-4. Enquanto o botão for mantido pressionado, os LEDs permanecem acesos; ao soltar, todos os LEDs são apagados após 200 ms.
+## Pinagem
 
----
-
-## 🔌 Hardware e Pinagem
-
-| Sinal / Recurso | Pino STM32 | Modo GPIO | Descrição |
+| Recurso | Pino | Modo | Descricao |
 |---|---|---|---|
-| **Botão de Usuário B1** | `PC13` | Entrada Digital (Input) | Botão azul on-board. Nível ALTO (`1`) quando pressionado. |
-| **LED 1 (Verde)** | `PB0` | Saída Digital (Push-Pull) | LD1 da placa NUCLEO. |
-| **LED 2 (Azul)** | `PB7` | Saída Digital (Push-Pull) | LD2 da placa NUCLEO. |
-| **LED 3 (Vermelho)** | `PB14` | Saída Digital (Push-Pull) | LD3 da placa NUCLEO. |
-| **USART3 TX** | `PD8` | Função Alternativa (AF7) | Transmissão serial conectada ao ST-LINK USB. |
-| **USART3 RX** | `PD9` | Função Alternativa (AF7) | Recepção serial conectada ao ST-LINK USB. |
+| Botao B1 | `PC13` | Input | Nivel 1 quando pressionado |
+| LD1 (Verde) | `PB0` | Output | LED onboard |
+| LD2 (Azul) | `PB7` | Output | LED onboard |
+| LD3 (Vermelho) | `PB14` | Output | LED onboard |
+| USART3 TX/RX | `PD8` / `PD9` | AF7 | VCP via ST-LINK (115200 8N1) |
 
----
+## Teste
 
-## ⚙️ Compilação e Gravação
-
-1. No **STM32CubeIDE**, selecione a pasta `hello-world-767` no *Project Explorer*.
-2. Pressione `Ctrl + B` para compilar o projeto.
-3. Conecte a placa NUCLEO-F767ZI via cabo USB no conector `CN1`.
-4. Clique com o botão direito no projeto -> **Run As** -> **STM32 C/C++ Application**.
-
----
-
-## 🧪 Como Testar e Validar
-
-1. Abra um terminal serial (ex: `picocom`, `minicom`, PuTTY ou monitor serial do VS Code):
-   * **Porta:** `/dev/ttyACM0` (Linux) ou `COMx` (Windows)
-   * **Baud Rate:** `115200`
-   * **Configuração:** 8N1 (8 bits, Sem paridade, 1 stop bit)
-2. **Sem pressionar o botão:** Você verá mensagens contínuas:
-   ```text
-   estado: 0
-   estado: 0
-   ```
-3. **Pressione e segure o botão azul B1 (`PC13`):**
-   * Os 3 LEDs (`LD1`, `LD2`, `LD3`) acenderão juntos imediatamente.
-   * O terminal exibirá:
-     ```text
-     estado: 1
-     ```
-4. **Solte o botão:** Os LEDs se apagam e as mensagens voltam a indicar `estado: 0`.
-
----
-
-## 🤖 Prompt Pronto para Agente IA
-
-Copie e envie o bloco abaixo caso queira que uma IA te guie neste projeto:
-
-```text
-Estou rodando o projeto "hello-world-767" na placa NUCLEO-F767ZI.
-O firmware lê o botão PC13 e controla os LEDs PB0, PB7 e PB14 enquanto envia "estado: X" na USART3 (115200 bps).
-Me guie passo a passo na validação no STM32CubeIDE e no monitoramento via terminal serial.
-```
+1. Conecte a placa via USB e abra o terminal serial em 115200 8N1 (`/dev/ttyACM0` ou `COMx`).
+2. O terminal recebera continuamente `estado: 0\r\n`.
+3. Pressione o botao azul `PC13`: os tres LEDs acendem e o terminal passa a receber `estado: 1\r\n`.

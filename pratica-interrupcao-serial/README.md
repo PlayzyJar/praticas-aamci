@@ -1,66 +1,28 @@
-# Prática: Interrupção & Protocolo Serial com Handshake (`pratica-interrupcao-serial`)
+# Pratica Interrupcao Serial (Protocolo com Handshake na USART2)
 
-Protocolo de comunicação serial robusto bidirecional sobre a interface **USART2** (`115200 bps`), incluindo pacote de comando e resposta de confirmação (*ACK*), máquina de estados no processamento de bytes, recuperação automática de erro de *Overrun* (`ORE`) e debouncing não-bloqueante por amostragem temporal.
+Protocolo de comunicacao serial estruturado sobre a USART2 (115200 8N1) com confirmacao de entrega (ACK), recuperacao automatica de erro de overrun (`ORE`) e debounce nao-bloqueante por amostragem de tempo (`HAL_GetTick`).
 
----
+## Protocolo
 
-## 📋 Arquitetura do Protocolo
+- **Comandos:**
+  - `CMD_USER_BTN (0xAA)`: Enviado ao pressionar o botao `PC13`. Comuta LD1 (Verde) e responde com `ACK_BYTE`.
+  - `CMD_EXT_BTN (0xBB)`: Enviado ao pressionar o botao externo `PE0`. Comuta LD2 (Azul) e responde com `ACK_BYTE`.
+  - `ACK_BYTE (0xCC)`: Confirmacao de recebimento enviada pelo receptor.
+- **Timeout:** Transmissor aguarda o byte `0xCC` por ate 50 ms. Se expirar, comuta o LED local indicando falha.
+- **Tratamento ORE:** A cada ciclo do loop, limpa a flag `UART_FLAG_ORE` com `__HAL_UART_CLEAR_OREFLAG(&huart2)` para evitar travamento da recepcao.
 
-O módulo `serial_protocol.c` implementa um parser determinístico:
+## Pinagem
 
-* **Tabela de Comandos:**
-  * `CMD_USER_BTN = 0xAA`: Enviado ao pressionar o botão de usuário `B1` (`PC13`). Aciona a ação `ACTION_TOGGLE_LD1` e devolve `ACK_BYTE`.
-  * `CMD_EXT_BTN = 0xBB`: Enviado ao pressionar o botão externo `PE0`. Aciona a ação `ACTION_TOGGLE_LD2` e devolve `ACK_BYTE`.
-  * `ACK_BYTE = 0xCC`: Byte de reconhecimento enviado imediatamente pelo receptor para confirmar a execução.
-* **Timeout de Confirmação:** O transmissor aguarda resposta em até `50 ms` usando `HAL_GetTick()`. Se o ACK não for recebido dentro da janela temporal, a função indica falha de handshake e comuta o LED local.
-* **Resiliência a Erros de UART:** O loop verifica e limpa proativamente a flag de sobrecarga (`__HAL_UART_CLEAR_OREFLAG(&huart2)`), impedindo que recepções desalinhadas travem o hardware receptor.
-
----
-
-## 🔌 Hardware e Pinagem
-
-| Sinal / Recurso | Pino STM32 | Modo / Função | Descrição |
+| Recurso | Pino | Modo | Descricao |
 |---|---|---|---|
-| **USART2 TX** | `PD5` | AF7 (USART2_TX) | Transmissão de comandos e ACK para outro nó / serial. |
-| **USART2 RX** | `PA3` | AF7 (USART2_RX) | Recepção de comandos e ACK. |
-| **Botão de Usuário B1** | `PC13` | Entrada Digital (Push-Button) | Dispara o envio de `0xAA` via USART2. |
-| **Botão Externo (BTN_2)** | `PE0` | Entrada Digital com Pull-Up | Dispara o envio de `0xBB` via USART2. |
-| **LED 1 (Verde)** | `PB0` | Saída Digital (`LD1_Pin`) | Alternado ao receber `0xAA` (ou na falha de ACK local). |
-| **LED 2 (Azul)** | `PB7` | Saída Digital (`LD2_Pin`) | Alternado ao receber `0xBB` (ou na falha de ACK local). |
-| **USART3 (VCP)** | `PD8`/`PD9` | AF7 (USART3) | Porta auxiliar ST-LINK ativa. |
+| USART2 TX | `PD5` | AF7 | Transmissao de comandos/ACK |
+| USART2 RX | `PA3` | AF7 | Recepcao de comandos/ACK |
+| Botao B1 | `PC13` | Input | Envia `0xAA` |
+| Botao Ext | `PE0` | Input | Envia `0xBB` |
+| LD1 (Verde) | `PB0` | Output | Alternado por `0xAA` |
+| LD2 (Azul) | `PB7` | Output | Alternado por `0xBB` |
 
----
+## Teste
 
-## ⚙️ Compilação e Gravação
-
-1. No **STM32CubeIDE**, selecione `pratica-interrupcao-serial`.
-2. Compile o código pressionando `Ctrl + B`.
-3. Conecte a placa via cabo USB `CN1` e execute **Run As** -> **STM32 C/C++ Application**.
-
----
-
-## 🧪 Como Testar e Validar
-
-### Teste em Loopback Local (Eco Direto)
-1. Conecte um jumper entre **`PD5` (USART2_TX)** e **`PA3` (USART2_RX)** no conector Morpho da placa.
-2. Pressione o botão azul `PC13`:
-   * O STM32 transmitirá `0xAA` por `PD5` e receberá imediatamente por `PA3`.
-   * O parser responderá enviando `0xCC` (ACK) e alternará o **LED Verde (`LD1`)**.
-   * O transmissor receberá seu próprio ACK dentro de 50 ms com sucesso.
-3. Repita pressionando o botão externo em `PE0` (ou aterrando `PE0` brevemente): o **LED Azul (`LD2`)** alternará.
-
-### Teste entre Duas Placas NUCLEO
-1. Ligue `PD5` (TX) da Placa 1 em `PA3` (RX) da Placa 2.
-2. Ligue `PA3` (RX) da Placa 1 em `PD5` (TX) da Placa 2.
-3. Conecte os pinos `GND` de ambas as placas.
-4. Pressionar `PC13` na Placa 1 comutará o `LD1` da Placa 2 remotamente e devolverá o ACK para a Placa 1.
-
----
-
-## 🤖 Prompt Pronto para Agente IA
-
-```text
-Estou analisando o projeto "pratica-interrupcao-serial" na NUCLEO-F767ZI.
-Ele utiliza a USART2 (TX em PD5, RX em PA3 a 115200 bps) para trocar pacotes de comando 0xAA/0xBB e ACK 0xCC com tratamento de ORE.
-Me guie no teste de loopback físico entre PD5 e PA3 e na validação do parser de comandos.
-```
+1. **Loopback local (1 placa):** Conecte um jumper entre `PD5` (TX) e `PA3` (RX). Pressione `PC13`: o microcontrolador transmite `0xAA`, recebe seu proprio pacote, responde `0xCC` e alterna o LED verde (`LD1`).
+2. **Entre duas placas:** Conecte `PD5` (TX) da placa A em `PA3` (RX) da placa B, `PA3` (RX) da placa A em `PD5` (TX) da placa B, e compartilhe o GND.
